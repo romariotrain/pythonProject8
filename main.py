@@ -1,41 +1,44 @@
-import requests
-
-from pprint import pprint
-
-import os
-
-class YaUploader:
-    def __init__(self, token: str):
-        self.token = token
-
-    def get_headers(self):
-        return {
-            'Content-Type' : 'application/json',
-            'Authorization' : 'OAuth {}'.format(self.token)
-        }
-    def upload(self, file_path):
-        URL = 'https://cloud-api.yandex.net:443/v1/disk/resources/upload'
-        headers = self.get_headers()
-        params = {'path': file_path, 'overwrite': 'true'}
-        response = requests.get(URL, headers=headers, params=params)
-        pprint(response.json())
-        return response.json()
+import requests as requests
 
 
-    def upload_file_to_disk(self, file_path):
-        response_href = self.upload(file_path)
-        href = response_href.get('href', '')
-        response = requests.put(href, data=open(file_path, 'rb'))
-        response.raise_for_status()
-        file_path = os.path.normpath(file_path)
-        if response.status_code == 201:
-            print('Success')
+URL = 'https://akabab.github.io/superhero-api/api'
+
+superheroes_ids = {}
+superheroes = ['Hulk', 'Thanos', 'Captain America']
+def get_ids():
+    all_heroes = requests.get(URL + '/all.json' )
+    # pprint(all_heroes.json())
+    for hero in all_heroes.json():
+        if hero['name'] in superheroes:
+
+            superheroes_ids[hero['name']] = str(hero['id'])
 
 
-if __name__ == '__main__':
+superheroes_int = []
+superheroes_stats = []
+get_ids()
 
-    token = ''
+
+for id in superheroes_ids:
+    response = requests.get(URL + '/powerstats/' + superheroes_ids[id] + '.json')
+    superhero_stats = {id: response.json()}
+    superheroes_stats.append(superhero_stats)
 
 
-    ya = YaUploader(token)
-    ya.upload_file_to_disk('388908-sepik.jpg')
+
+for superhero in superheroes_stats:
+    for stat in superhero:
+        intelligence = superhero[stat]['intelligence']
+        superhero_int = {stat: intelligence}
+        superheroes_int.append(superhero_int)
+
+
+genius_int = 0
+for hero in superheroes_int:
+    for int_ in hero:
+        if hero[int_] > genius_int:
+            genius_int = hero[int_]
+            genius = int_
+
+print(f' Самый умный {genius}')
+
